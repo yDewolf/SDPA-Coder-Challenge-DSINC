@@ -151,7 +151,13 @@ def test_compile():
 def test_model():
     X, y = pickle_load_training_data("X1.pickle", "y1.pickle")
     X = X/255.0
-    model = create_model_convolutional(1, [32, 32], [(3, 3), (3, 3)], [(2, 2), (2, 2)], X.shape[1:])
-    train_model_convolutional(model, X, y, 3)
+    # model = create_model_convolutional(1, [32, 32], [(3, 3), (3, 3)], [(2, 2), (2, 2)], X.shape[1:])
+    # train_model_convolutional(model, X, y, 15)
 
-test_compile()
+    # model.save("DuckDetection.keras")
+
+    model = tensorflow.keras.models.load_model("DuckDetection.keras")
+    loss, acc = model.evaluate(X, y)
+    print(loss, acc)
+
+test_model()
