@@ -1,1 +1,0 @@
-# General training algorithm using tensorFlow
