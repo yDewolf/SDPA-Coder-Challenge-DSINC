@@ -32,7 +32,7 @@ def compile_training_data(dir_path: str = "training_data/", categories: list[str
 def train_model(model, X_file_path: str, y_file_path: str, epochs: int = 3, loss = "binary_crossentropy", optimizer="adam"):
     X, y = DatasetUtils.pickle_load_training_data(X_file_path, y_file_path)
 
-    DatasetUtils.train_model_convolutional(model, X, y, epochs, loss, optimizer)
+    ModelUtils.train_model_convolutional(model, X, y, epochs, loss, optimizer)
 
 
 
@@ -74,7 +74,7 @@ def predict_images_menu(global_menu_variables: dict):
         image_paths.append(images_dir + "/" + img_path)
         count += 1
 
-    guesses = DatasetUtils.model_predict(global_menu_variables["loaded_model"], categories, image_paths, False)
+    guesses = ModelUtils.model_predict(global_menu_variables["loaded_model"], categories, image_paths, False)
     for guess_dict in guesses:
         DatasetUtils.pylot.imshow(guess_dict["img_array"])
         DatasetUtils.pylot.title(f"Guess: {categories[int(guess_dict["highest_guess"])]}")

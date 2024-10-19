@@ -1,4 +1,6 @@
 # General training algorithm using tensorFlow
+import os
+
 import pickle
 import numpy
 import random
