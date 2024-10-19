@@ -11,8 +11,8 @@ y_train_path: str = default_pickle_data_path + "y_train.pickle"
 # Neural Network functions:
 
 def create_duck_model(X):
-    shape = X.shape[1:]
-    return NNUtils.create_model_convolutional(1, [32, 32], [(2, 2), (2, 2)], [(2, 2), (2, 2)], shape)
+    shape = X.shape
+    return NNUtils.create_model_convolutional(3, [32, 16], [(3, 3), (3, 3)], [(2, 2), (2, 2)], shape)
 
 
 def load_model(model_name: str):
@@ -24,7 +24,7 @@ def save_model(model, model_name: str):
 
 
 def compile_training_data(dir_path: str = "training_data/", categories: list[str] = ["alien_ducks", "normal_ducks"]):
-    X, y = NNUtils.compile_training_data(dir_path, categories, 32, True)
+    X, y = NNUtils.compile_training_data(dir_path, categories, 32, False)
     NNUtils.pickle_save_training_data(default_pickle_data_path + "X_train", default_pickle_data_path + "y_train", X, y)
     return X, y
 
@@ -71,7 +71,11 @@ def predict_images_menu():
         image_paths.append(images_dir + "/" + img_path)
         count += 1
 
-    NNUtils.model_predict(loaded_model, categories, image_paths)
+    guesses = NNUtils.model_predict(loaded_model, categories, image_paths, False)
+    for guess_dict in guesses:
+        NNUtils.pylot.imshow(guess_dict["img_array"])
+        NNUtils.pylot.title(f"Guess: {categories[int(guess_dict["highest_guess"])]}")
+    NNUtils.pylot.show()
 
 # Main menu
 
@@ -101,8 +105,8 @@ def test_main_menu():
     return False
 
 
-def main(running: bool = True):
-    if not running:
+def main(compile: bool = True):
+    if not compile:
         X, y = compile_training_data()
         loaded_model = create_duck_model(X)
         save_model(loaded_model, "DuckDetection")

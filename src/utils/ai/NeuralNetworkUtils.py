@@ -3,7 +3,7 @@ import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import tensorflow
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D # type: ignore
 import pickle
 import numpy
 import random
@@ -39,11 +39,13 @@ def create_model_convolutional(output_layer_size: int, kernel_sizes: list[int], 
         return
 
     new_model = tensorflow.keras.models.Sequential()
-    
+    new_model.add(Conv2D(kernel_sizes[0], strides[0], input_shape=(32, 32, 3)))
+
     # Hidden layers and input layer
     for idx in range(len(kernel_sizes)):
         if idx == 0:
-            new_model.add(Conv2D(kernel_sizes[idx], strides[idx], input_shape=input_shape))
+            continue
+            # new_model.add(Conv2D(kernel_sizes[idx], strides[idx]))#, input_shape=input_shape))
         else:
             new_model.add(Conv2D(kernel_sizes[idx], strides[idx]))
         
@@ -76,21 +78,33 @@ def train_model(model, x_train_data, y_train_data, _epochs: int, _optimizer: str
     model.fit(x_train_data, y_train_data, epochs=_epochs)
 
 
-def model_predict(model, categories: list[str], image_paths: list[str] = []):
-    predict_data = create_predict_data(image_paths, convert_to_grayscale=False)
-    X = prepare_predict_data(predict_data, 32)
+def model_predict(model, categories: list[str], image_paths: list[str] = [], convert_to_grayscale: bool = True):
+    predict_data = create_predict_data(image_paths, convert_to_grayscale=convert_to_grayscale)
+    color_values = 3
+    if convert_to_grayscale:
+        color_values = 1
+    X = prepare_predict_data(predict_data, 32, color_values)
     #X = X/255.0
 
     predictions = model.predict(X)
 
+    guesses = []
     for idx in range(len(image_paths)):
-        highest_guess = predictions[idx] * len(categories)
+        highest_guess = predictions[idx][0]
         img_array = cv2.imread(image_paths[idx])
 
-        pylot.imshow(img_array)
-        pylot.title(f"Guess: {categories[int(highest_guess)]}")
-        print(categories[int(highest_guess)], highest_guess[0])
-        pylot.show()
+        guess_dict = {
+            "highest_guess": highest_guess,
+            "img_array": img_array
+        }
+        guesses.append(guess_dict)
+
+        # pylot.imshow(img_array)
+        # pylot.title(f"Guess: {categories[int(highest_guess)]}")
+        print(categories[int(highest_guess)], highest_guess)
+        # pylot.show()
+    
+    return guesses
 
 
 def compile_training_data(data_dir_path: str, categories: list[str], img_size: int, convert_to_grayscale: bool = True, debug: bool = False):
@@ -98,14 +112,15 @@ def compile_training_data(data_dir_path: str, categories: list[str], img_size: i
     color_values = 3
     if convert_to_grayscale:
         color_values = 1
+    
     return prepare_training_data(training_data, img_size, color_values)
 
 
 # Categories should be subfolders
 def create_training_data(data_dir_path: str, categories: list[str], img_size: int, convert_to_grayscale: bool = True, debug: bool = False):
-    img_colors = cv2.IMREAD_ANYCOLOR
-    if convert_to_grayscale:
-        img_colors = cv2.IMREAD_GRAYSCALE
+    # img_colors = cv2.IMREAD_COLOR
+    # if convert_to_grayscale:
+    #     img_colors = cv2.IMREAD_GRAYSCALE
 
     training_data = []
 
@@ -115,9 +130,16 @@ def create_training_data(data_dir_path: str, categories: list[str], img_size: in
 
         for img in os.listdir(path):
             try:
-                img_array = cv2.imread(os.path.join(path, img), img_colors)
+                img_array = cv2.imread(os.path.join(path, img))
+                if convert_to_grayscale:
+                    img_array = cv2.imread(os.path.join(path, img), cv2.IMREAD_GRAYSCALE)
+                
                 resized_array = cv2.resize(img_array, (img_size, img_size))
-                training_data.append([resized_array, class_num])
+                
+                if convert_to_grayscale:
+                    training_data.append([resized_array, class_num])#[class_num, class_num, class_num]])
+                else:
+                    training_data.append([resized_array, [class_num, class_num, class_num]])
 
                 if debug:
                     pylot.imshow(img_array)
@@ -134,9 +156,6 @@ def create_training_data(data_dir_path: str, categories: list[str], img_size: in
 
 def create_predict_data(img_paths: list[str], img_size: int = 32, convert_to_grayscale: bool = True, debug: bool = False):
     predict_data = []
-    img_colors = cv2.IMREAD_ANYCOLOR
-    if convert_to_grayscale:
-        img_colors = cv2.IMREAD_GRAYSCALE
 
     for path in img_paths:
         if not os.path.isfile(path):
@@ -144,7 +163,10 @@ def create_predict_data(img_paths: list[str], img_size: int = 32, convert_to_gra
             continue
         
         try:
-            img_array = cv2.imread(path, img_colors)
+            img_array = cv2.imread(path)
+            if convert_to_grayscale:
+                img_array = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+
             resized_array = cv2.resize(img_array, (img_size, img_size))
             # Should this append a list?
             predict_data.append(resized_array)
@@ -160,6 +182,7 @@ def create_predict_data(img_paths: list[str], img_size: int = 32, convert_to_gra
     
     return predict_data
 
+
 def prepare_predict_data(predict_data, img_size: int, color_values: int = 1):
     X = []
     for features in predict_data:
@@ -168,7 +191,6 @@ def prepare_predict_data(predict_data, img_size: int, color_values: int = 1):
     X = numpy.array(predict_data).reshape(-1, img_size, img_size, color_values)
 
     return X
-
 
 def prepare_training_data(training_data, img_size: int, color_values: int = 1):
     X = []
@@ -182,6 +204,7 @@ def prepare_training_data(training_data, img_size: int, color_values: int = 1):
     X = numpy.array(X).reshape(-1, img_size, img_size, color_values)
     y = numpy.array(y)
 
+    
     return X, y
 
 
@@ -206,26 +229,3 @@ def pickle_load_training_data(X_file_path: str, y_file_path: str):
 
     return X, y
 
-
-# def test_compile():
-#     X, y = compile_training_data("training_data", ["alien_ducks", "normal_ducks"], 32)
-#     pickle_save_training_data("X1", "y1", X, y)
-
-# def test_model():
-#     model = tensorflow.keras.models.load_model("DuckDetection.keras")
-#     image_paths = []
-#     dir_path = "training_data/validate"
-#     count = 0
-#     max_images = 10
-#     for img_path in os.listdir(dir_path):
-#         if count >= max_images:
-#             break
-
-#         image_paths.append(dir_path + "/" + img_path)
-#         count += 1
-
-#     model_predict(model,["Alien Duck", "Normal Duck"], image_paths)
-
-
-
-# test_model()
