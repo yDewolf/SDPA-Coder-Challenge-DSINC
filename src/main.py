@@ -46,7 +46,9 @@ def save_model_menu():
     save_model(loaded_model, model_name)
 
 def train_model_menu():
-    train_model(loaded_model, X_train_path, y_train_path)
+    epochs = int(input("How many iterations should the model be trained? (only round values greater than 0): "))
+
+    train_model(loaded_model, X_train_path, y_train_path, epochs)
 
 def predict_images_menu():
     categories = ["Alien Duck", "Normal Duck"]
@@ -75,7 +77,7 @@ def predict_images_menu():
     for guess_dict in guesses:
         NNUtils.pylot.imshow(guess_dict["img_array"])
         NNUtils.pylot.title(f"Guess: {categories[int(guess_dict["highest_guess"])]}")
-    NNUtils.pylot.show()
+        NNUtils.pylot.show()
 
 # Main menu
 
