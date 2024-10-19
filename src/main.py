@@ -1,8 +1,10 @@
 import os
-import utils.ai.NeuralNetworkUtils as NNUtils
+import utils.DatasetUtils as DatasetUtils
+import utils.ModelUtils as ModelUtils
 
 default_models_path: str = "models/"
 default_pickle_data_path: str = "pickle_data/"
+default_model_name: str = "DuckDetection"
 
 X_train_path: str = default_pickle_data_path + "X_train.pickle"
 y_train_path: str = default_pickle_data_path + "y_train.pickle"
@@ -12,45 +14,44 @@ y_train_path: str = default_pickle_data_path + "y_train.pickle"
 
 def create_duck_model(X):
     shape = X.shape
-    return NNUtils.create_model_convolutional(3, [32, 16], [(3, 3), (3, 3)], [(2, 2), (2, 2)], shape)
+    return ModelUtils.create_model_convolutional(3, [32, 16], [(3, 3), (3, 3)], [(2, 2), (2, 2)], shape)
 
 
 def load_model(model_name: str):
-    return NNUtils.tensorflow.keras.models.load_model(default_models_path + model_name + ".keras")
-loaded_model = load_model("DuckDetection")
+    return ModelUtils.tensorflow.keras.models.load_model(default_models_path + model_name + ".keras")
 
 def save_model(model, model_name: str):
     model.save(default_models_path + model_name + ".keras")
 
 
 def compile_training_data(dir_path: str = "training_data/", categories: list[str] = ["alien_ducks", "normal_ducks"]):
-    X, y = NNUtils.compile_training_data(dir_path, categories, 32, False)
-    NNUtils.pickle_save_training_data(default_pickle_data_path + "X_train", default_pickle_data_path + "y_train", X, y)
+    X, y = DatasetUtils.compile_training_data(dir_path, categories, 32, False)
+    DatasetUtils.pickle_save_training_data(default_pickle_data_path + "X_train", default_pickle_data_path + "y_train", X, y)
     return X, y
 
 def train_model(model, X_file_path: str, y_file_path: str, epochs: int = 3, loss = "binary_crossentropy", optimizer="adam"):
-    X, y = NNUtils.pickle_load_training_data(X_file_path, y_file_path)
+    X, y = DatasetUtils.pickle_load_training_data(X_file_path, y_file_path)
 
-    NNUtils.train_model_convolutional(model, X, y, epochs, loss, optimizer)
+    DatasetUtils.train_model_convolutional(model, X, y, epochs, loss, optimizer)
 
 
 
 # Menu functions
 
-def load_model_menu():
+def load_model_menu(global_menu_variables: dict):
     model_name = input("Type the model name (without .keras): ")
-    loaded_model = load_model(model_name)
+    global_menu_variables["loaded_model"] = load_model(model_name)
 
-def save_model_menu():
+def save_model_menu(global_menu_variables: dict):
     model_name = input("Type a name for the model: ")
-    save_model(loaded_model, model_name)
+    save_model(global_menu_variables["loaded_model"], model_name)
 
-def train_model_menu():
+def train_model_menu(global_menu_variables: dict):
     epochs = int(input("How many iterations should the model be trained? (only round values greater than 0): "))
 
-    train_model(loaded_model, X_train_path, y_train_path, epochs)
+    train_model(global_menu_variables["loaded_model"], X_train_path, y_train_path, epochs)
 
-def predict_images_menu():
+def predict_images_menu(global_menu_variables: dict):
     categories = ["Alien Duck", "Normal Duck"]
 
     images_dir = ""
@@ -73,15 +74,15 @@ def predict_images_menu():
         image_paths.append(images_dir + "/" + img_path)
         count += 1
 
-    guesses = NNUtils.model_predict(loaded_model, categories, image_paths, False)
+    guesses = DatasetUtils.model_predict(global_menu_variables["loaded_model"], categories, image_paths, False)
     for guess_dict in guesses:
-        NNUtils.pylot.imshow(guess_dict["img_array"])
-        NNUtils.pylot.title(f"Guess: {categories[int(guess_dict["highest_guess"])]}")
-        NNUtils.pylot.show()
+        DatasetUtils.pylot.imshow(guess_dict["img_array"])
+        DatasetUtils.pylot.title(f"Guess: {categories[int(guess_dict["highest_guess"])]}")
+        DatasetUtils.pylot.show()
 
 # Main menu
 
-def test_main_menu():
+def test_main_menu(global_menu_variables):
     options = [
         {"name": "Exit"},
         {"name": "Load Model", "callable": load_model_menu},
@@ -101,7 +102,7 @@ def test_main_menu():
             print("WARNING: Invalid option!")
     
     if options[option].__contains__("callable"):
-        options[option]["callable"]()
+        options[option]["callable"](global_menu_variables)
         return True
 
     return False
@@ -114,10 +115,14 @@ def main(compile: bool = True):
         save_model(loaded_model, "DuckDetection")
         return
 
-    #loaded_model = load_model("DuckDetection")
 
+    global_menu_variables = {
+        "loaded_model": load_model(default_model_name)
+    }
+
+    # Menu loop
     running = True
     while running:
-        running = test_main_menu()
+        running = test_main_menu(global_menu_variables)
 
 main()
