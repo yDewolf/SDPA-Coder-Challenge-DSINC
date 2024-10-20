@@ -7,16 +7,21 @@ class MenuOption:
 
     def __init__(self, option_value, name: str = ""):
         if name == "":
-            if option_value is Menu:
+            if type(option_value) is Menu:
                 name = f"Go to {option_value.title}"
-            elif option_value is callable:
+            elif type(option_value) is callable:
                 name = f"Run {str(option_value)}"
+            elif type(option_value) is str:
+                name = f"Select {option_value}"
         
         self.option_value = option_value
         self.name = name
     
     def get_value(self):
         if callable(self.option_value) or self.option_value is callable:
+            return self.option_value
+
+        if type(self.option_value) is str:
             return self.option_value
 
         # If is menu
@@ -27,9 +32,24 @@ class MenuOption:
 class Menu:
     title: str
     menu_id: int
+    menu_handler: object
 
     options: list[MenuOption]
     
+    # Should return a list[options]
+    # Receives self.options
+    # Also receives menu handler
+    update_options: callable
+
+    # Should return a str
+    # Receives the current title
+    # Also receives menu handler
+    update_title: callable
+    
+    # Receives the selected option value
+    # Also receives menu handler
+    call_custom_function: callable 
+
     show_exit_option: bool = True
     exit_option_text: str = "Go back"
     
@@ -43,8 +63,18 @@ class Menu:
 
         self.width = width
         self.show_exit_option = show_exit_option
+
+        self.update_options = None
+        self.update_title = None
+        self.call_custom_function = None
     
     def show(self):
+        if self.update_title:
+            self.title = self.update_title(self.title, self.menu_handler)
+        
+        if self.update_options:
+            self.options = self.update_options(self.options, self.menu_handler)
+
         menu_string = ""
         menu_string += self.title.center(self.width)
 
@@ -60,7 +90,16 @@ class Menu:
         menu_string += "\n" + options_string
         print(menu_string)
 
-        return self._wait_for_option_input()
+        option_value = self._wait_for_option_input()
+
+        # Call custom function only if option value is not False
+        if self.call_custom_function and option_value:
+            # Call custom function and then go back to previous menu
+            self.call_custom_function(option_value, self.menu_handler)
+            return False
+
+        return option_value
+
 
     def _wait_for_option_input(self):
         min_option: int = 1
@@ -89,6 +128,7 @@ class MenuHandler:
 
     menu_path: list[Menu]
     menus: dict = {}
+    global_variables = {}
 
     def __init__(self, main_menu: Menu, add_menus: list[Menu]):
         self.main_menu = main_menu
@@ -96,6 +136,7 @@ class MenuHandler:
 
         self.menu_path = [main_menu]
 
+        self.add_menu(main_menu)
         for menu in add_menus:
             self.add_menu(menu)
 
@@ -108,11 +149,17 @@ class MenuHandler:
         
         else:
             # Append the previous menu to the menu path
+            #self.current_menu.global_variables = self.global_variables
             self.menu_path.append(self.current_menu.menu_id)
+
+        # Update global variables for the next menu
+        #self.menus[menu_id].global_variables = self.global_variables
 
         self.current_menu = self.menus[menu_id]
 
     def add_menu(self, menu: Menu):
+        #menu.global_variables = self.global_variables
+        menu.menu_handler = self
         self.menus[menu.menu_id] = menu
 
     ## Main loop of this MenuHandler

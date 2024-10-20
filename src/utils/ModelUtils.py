@@ -27,8 +27,7 @@ def create_model(output_layer_size: int, hidden_layer_sizes: list[int], hidden_l
 
     return new_model
 
-# Strides is basically the grid of pixels it will look for etc etc
-# Input shape -> X.shape[1:]
+# Strides are basically the grid of pixels it will look for etc etc
 def create_model_convolutional(output_layer_size: int, kernel_sizes: list[int], strides: list[tuple], pool_sizes: list[tuple], input_shape):
     if len(kernel_sizes) != len(strides):
         # Push error:
