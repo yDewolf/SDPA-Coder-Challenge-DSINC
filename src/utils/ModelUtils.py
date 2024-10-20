@@ -35,7 +35,7 @@ def create_model_convolutional(output_layer_size: int, kernel_sizes: list[int], 
         return
 
     new_model = tensorflow.keras.models.Sequential()
-    new_model.add(Conv2D(kernel_sizes[0], strides[0], input_shape=(32, 32, 3)))
+    new_model.add(Conv2D(kernel_sizes[0], strides[0], input_shape=input_shape))
 
     # Hidden layers and input layer
     for idx in range(len(kernel_sizes)):
@@ -51,9 +51,9 @@ def create_model_convolutional(output_layer_size: int, kernel_sizes: list[int], 
     # Pre output layer
     new_model.add(Flatten())
     new_model.add(Dense(kernel_sizes[-1]))
+    new_model.add(Activation('relu'))
 
     # Output layer
-    # 1 should be output_layer_size
     new_model.add(Dense(output_layer_size))
     new_model.add(Activation('sigmoid'))
 
@@ -71,7 +71,7 @@ def train_model(model, x_train_data, y_train_data, _epochs: int, _optimizer: str
                 )
 
     # Use binary with normal ducks X alien ducks
-    model.fit(x_train_data, y_train_data, epochs=_epochs)
+    model.fit(x_train_data, y_train_data, epochs=_epochs, validation_split=0.1)
 
 
 def model_predict(model, categories: list[str], image_paths: list[str] = [], convert_to_grayscale: bool = True):
@@ -86,19 +86,19 @@ def model_predict(model, categories: list[str], image_paths: list[str] = [], con
 
     guesses = []
     for idx in range(len(image_paths)):
-        highest_guess = predictions[idx][0]
+        highest_guess = round(predictions[idx][0])
         img_array = cv2.imread(image_paths[idx])
 
         guess_dict = {
             "highest_guess": highest_guess,
+            "predictions": predictions[idx],
             "img_array": img_array
         }
         guesses.append(guess_dict)
 
-        # pylot.imshow(img_array)
-        # pylot.title(f"Guess: {categories[int(highest_guess)]}")
-        print(categories[int(highest_guess)], highest_guess)
-        # pylot.show()
+        print(categories[highest_guess], highest_guess, predictions[idx])
     
+    #print(predictions)
+
     return guesses
 

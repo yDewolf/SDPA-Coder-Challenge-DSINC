@@ -89,6 +89,7 @@ def prepare_predict_data(predict_data, img_size: int, color_values: int = 1):
         X.append(features)
 
     X = numpy.array(predict_data).reshape(-1, img_size, img_size, color_values)
+    #X = X/255.0
 
     return X
 
@@ -120,7 +121,7 @@ def pickle_save_training_data(X_filename: str, y_filename: str, X, y):
 def pickle_load_training_data(X_file_path: str, y_file_path: str):
     pickle_in = open(X_file_path, "rb")
     X = pickle.load(pickle_in)
-    X = X/255.0
+    #X = X/255.0
     pickle_in.close()
 
     pickle_in = open(y_file_path, "rb")

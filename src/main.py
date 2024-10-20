@@ -15,8 +15,7 @@ y_train_path: str = default_pickle_data_path + "y_train.pickle"
 global loaded_model
 
 def create_duck_model(X):
-    shape = X.shape
-    return ModelUtils.create_model_convolutional(3, [32, 16], [(3, 3), (3, 3)], [(2, 2), (2, 2)], shape)
+    return ModelUtils.create_model_convolutional(3, [64, 32], [(3, 3), (2, 2)], [(2, 2), (2, 2)], X.shape[1:])
 
 
 def load_model(model_name: str, menu_handler: MenuHandler):
@@ -75,7 +74,7 @@ def predict_images_in_dir(dir_path: str, menu_handler: MenuHandler):
     guesses = ModelUtils.model_predict(loaded_model, categories, img_paths, False)
     for guess_dict in guesses:
         DatasetUtils.pylot.imshow(guess_dict["img_array"])
-        DatasetUtils.pylot.title(f"Guess: {categories[int(guess_dict["highest_guess"])]}")
+        DatasetUtils.pylot.title(f"Guess: {categories[guess_dict["highest_guess"]]}")
         DatasetUtils.pylot.show()
 
 predict_images_menu = Menu(2, "Predict Images", [])
@@ -128,3 +127,8 @@ main_menu.exit_option_text = "Quit"
 menu_handler = MenuHandler(main_menu, [load_model_menu, predict_images_menu])
 
 menu_handler.main_loop()
+
+# X, y = compile_training_data()
+
+# model = create_duck_model(X)
+# save_model(model, "DuckDetector")
