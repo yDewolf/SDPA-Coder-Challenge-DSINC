@@ -4,8 +4,14 @@
 class MenuOption:
     name: str
     option_value = None # Option value should be a callable or a Menu object
+    has_visibility_condition: bool = False
 
-    def __init__(self, option_value, name: str = ""):
+    # Runs this callable to check if this option should be visible or not
+    # Receives Menu Handler as a parameter
+    visibiltity_condition: callable = None
+
+
+    def __init__(self, option_value, name: str = "", visibility_condition: callable = None):
         if name == "":
             if type(option_value) is Menu:
                 name = f"Go to {option_value.title}"
@@ -14,6 +20,9 @@ class MenuOption:
             elif type(option_value) is str:
                 name = f"Select {option_value}"
         
+        if visibility_condition != None:
+            self.add_visibiltiy_condition(visibility_condition)
+
         self.option_value = option_value
         self.name = name
     
@@ -26,6 +35,10 @@ class MenuOption:
 
         # If is menu
         return self.option_value.menu_id
+
+    def add_visibiltiy_condition(self, visibility_condition_callable: callable):
+        self.has_visibility_condition = True
+        self.visibiltity_condition = visibility_condition_callable
 
 # Simple Menu Class
 # Shows its options (MenuOption)
@@ -81,7 +94,17 @@ class Menu:
         options_string = ""
         visual_idx_offset = 1
 
-        for idx, option in enumerate(self.options):
+        available_options: list[MenuOption] = []
+
+        for option in self.options:
+            if option.has_visibility_condition:
+                if not option.visibiltity_condition(self.menu_handler):
+                    continue
+            
+            available_options.append(option)
+
+
+        for idx, option in enumerate(available_options):
             options_string += f"[{idx + visual_idx_offset}]-{option.name}\n"
         
         if self.show_exit_option:
@@ -90,7 +113,7 @@ class Menu:
         menu_string += "\n" + options_string
         print(menu_string)
 
-        option_value = self._wait_for_option_input()
+        option_value = self._wait_for_option_input(available_options)
 
         # Call custom function only if option value is not False
         if self.call_custom_function and option_value:
@@ -101,26 +124,31 @@ class Menu:
         return option_value
 
 
-    def _wait_for_option_input(self):
+    def _wait_for_option_input(self, available_options: list[MenuOption]):
         min_option: int = 1
         if self.show_exit_option:
             min_option = 0
         
-        max_option: int = len(self.options)
+        max_option: int = len(available_options)
         
         selected_option = -1
         while selected_option < min_option or selected_option > max_option:
-            selected_option = int(input(self.select_option_text))
+            selected_option = input(self.select_option_text)
+
+            if not selected_option.isnumeric(): selected_option = -1
+
+            selected_option = int(selected_option)
             # Valid option selected
             if not selected_option < min_option and not selected_option > max_option:
                 break
+            
             # Print warning
             print("WARNING: Invalid option!")
         
         if selected_option == 0:
             return False
         
-        return self.options[selected_option - 1].get_value()
+        return available_options[selected_option - 1].get_value()
 
 class MenuHandler:
     main_menu: Menu
@@ -130,18 +158,25 @@ class MenuHandler:
     menus: dict = {}
     global_variables = {}
 
-    def __init__(self, main_menu: Menu, add_menus: list[Menu]):
+    def __init__(self, main_menu: Menu, search_for_menus: bool = True, add_menus: list[Menu] = []):
         self.main_menu = main_menu
         self.current_menu = main_menu
 
         self.menu_path = [main_menu]
 
-        self.add_menu(main_menu)
+        if search_for_menus:
+            add_menus = _get_deep_menus(main_menu)
+        
         for menu in add_menus:
             self.add_menu(menu)
 
     # Changes current menu and adds the previous to menu_path
     def change_to_menu(self, menu_id: int):
+        if not self.menus.__contains__(menu_id):
+            # Push Error:
+            print(f"ERROR: Menu id wasn't found in menus | Provided ID: {menu_id} | Menus: {self.menus}")
+            return
+
         # If the previous menu is the menu you are trying to go to:
         # Remove it from the menu path (you are going back on the menu path)
         if self.menu_path[-1] == menu_id:
@@ -190,6 +225,22 @@ class MenuHandler:
             # Go to the selected menu
             self.change_to_menu(selected_option_value)
             continue
+
+# Looks at menu options
+# When it founds a MenuOption that references a Menu, it appends this Menu to menus list
+# This function is executed recursively
+def _get_deep_menus(menu: Menu) -> list[Menu]:
+    menus: list[Menu] = [menu]
+    for option in menu.options:
+        if type(option.option_value) != Menu:
+            continue
+
+        # Append the menu that was found
+        menus.append(option.option_value)
+        # Look for menus inside the menu that was found
+        menus += _get_deep_menus(option.option_value)
+
+    return menus
 
 
 # Example usage:
