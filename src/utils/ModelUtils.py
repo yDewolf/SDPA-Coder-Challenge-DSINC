@@ -6,6 +6,7 @@
 import cv2
 from utils.DatasetUtils import create_predict_data, prepare_predict_data
 from tensorflow.keras.models import Sequential, load_model # type: ignore
+from tensorflow.nn import softmax # type: ignore
 from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D # type: ignore
 
 
@@ -14,17 +15,17 @@ def create_model(output_layer_size: int, hidden_layer_sizes: list[int], hidden_l
         print("ERROR: Layer activations list and Layer sizes list should be the same length")
         return
 
-    new_model = tensorflow.keras.models.Sequential()
+    new_model = Sequential()
 
     # Input layer
     new_model.add(Flatten())
 
     # Hidden layers
     for idx in range(len(hidden_layer_sizes)):
-        new_model.add(tensorflow.keras.layers.Dense(hidden_layer_sizes[idx], activation=hidden_layer_activations[idx]))
+        new_model.add(Dense(hidden_layer_sizes[idx], activation=hidden_layer_activations[idx]))
 
     # Output layer
-    new_model.add(tensorflow.keras.layers.Dense(output_layer_size, activation=tensorflow.nn.softmax))
+    new_model.add(Dense(output_layer_size, activation=softmax))
 
     return new_model
 
