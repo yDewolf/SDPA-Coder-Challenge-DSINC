@@ -2,10 +2,11 @@
 # import os
 # os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-import tensorflow
+#import tensorflow
 import cv2
 from utils.DatasetUtils import create_predict_data, prepare_predict_data
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D # type: ignore
+from tensorflow.keras.models import Sequential, load_model # type: ignore
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D # type: ignore
 
 
 def create_model(output_layer_size: int, hidden_layer_sizes: list[int], hidden_layer_activations: list):
@@ -34,7 +35,8 @@ def create_model_convolutional(output_layer_size: int, kernel_sizes: list[int], 
         print("WARNING: Kernel sizes list should be the same size as strides list")
         return
 
-    new_model = tensorflow.keras.models.Sequential()
+    #new_model = tensorflow.keras.models.Sequential()
+    new_model = Sequential()
     new_model.add(Conv2D(kernel_sizes[0], strides[0], input_shape=input_shape))
 
     # Hidden layers and input layer
