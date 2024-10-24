@@ -13,6 +13,9 @@
   </li>
 </ol>
 
+<h3>Aviso: A missão 3 pedia para classficar se o pato era da espécie <i>Anas platyrhynchos</i> (Pato Real) ou se era um Xenófago. Por questões de desenvolvimento, eu diferenciei patos reais de outros patos, entendo os patos reais como patos alienígenas.</h3>
+
+
 <h1>Opiniões sobre os resultados do projeto</h1>
 <p>O projeto foi até que bem desenvolvido, a ideia inicial de usar redes neurais para classificar imagens de patos conseguiu ser executada nos primeiros 2 dias de criação do projeto, o resto foi mais pensar no que fazer para o projeto e como adequar ele a um sistema para um óculos.</p>
 <p>Coisas que eu mudaria:</p>
