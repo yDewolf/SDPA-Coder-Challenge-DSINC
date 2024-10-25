@@ -1,7 +1,7 @@
 import os
 import utils.DatasetUtils as DatasetUtils
 import utils.ModelUtils as ModelUtils
-from framework.MenuFramework import Menu, MenuHandler, MenuOption, range_input_value, bool_input_value
+from framework.MenuFramework import Menu, MenuHandler, MenuOption, range_input_value, bool_input_value, print_colored
 import numpy
 
 default_models_path: str = "models/"
@@ -117,7 +117,7 @@ def image_predict_minigame():
     else:
         print("Let's see if you really know how to identify ducks")
 
-    print("This game is very simple, it will show an image and you have to identify if the duck is an alien or not!")
+    print_colored("This game is very simple, it will show an image and you have to identify if the duck is an alien or not!", "header")
 
     categories = ["Normal Duck", "Alien Duck"]
 
@@ -155,32 +155,31 @@ def image_predict_minigame():
 
         for path in image_paths:
             img_array = DatasetUtils.pylot.imread(path)
-            DatasetUtils.pylot.title =  "Guess if this duck is an Alien or not: "
             DatasetUtils.pylot.imshow(img_array)
+            DatasetUtils.pylot.title =  "Guess if this duck is an Alien or not: "
             DatasetUtils.pylot.show()
             guess = bool_input_value("Was the duck an Alien?")
             print(f"Your guess: {categories[guess]} | Correct guess: {categories[images[path]]}")
             if categories[guess] == categories[images[path]]:
-                print(f"Correct answer! It really was an {categories[images[path]]}")
+                print_colored(f"Correct answer! It really was an {categories[images[path]]}", "green")
                 score += 1
             else:
-                print(f"Incorrect answer! It was an {categories[images[path]]}")
+                print_colored(f"Incorrect answer! It was an {categories[images[path]]}", "red")
 
-            print(f"Current score: {score}/{max_score}")
+            print_colored(f"\nCurrent score: {score}/{max_score}", "cyan")
         
-        print(f"Final score: {score}/{max_score}")
+        print_colored(f"Final score: {score}/{max_score}", "orange")
         if score == max_score:
-            print("Congratulations! You guessed correctly every time")
+            print_colored("Congratulations! You guessed correctly every time", "orange")
         
         elif score < max_score / 2:
-            print("That's a nice score! But you will need to practice to really turn into a duck detector!")
+            print_colored("That's a nice score! But you will need to practice to really turn into a duck detector!", "green")
         
         else:
-            print("Almost there! With a little bit of practice you can get 100% score")
+            print_colored("Almost there! With a little bit of practice you can get 100% score", "red")
         
         input("Press enter to continue...")
         play_again = bool_input_value("Do you want to play again? ")
-
 
 
 # Menu Custom Call Functions

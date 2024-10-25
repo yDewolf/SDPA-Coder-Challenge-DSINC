@@ -91,7 +91,7 @@ class Menu:
             self.options = self.update_options(self.options, self.menu_handler)
 
         menu_string = ""
-        menu_string += self.title.center(self.width)
+        menu_string += apply_color(self.title, "header").center(self.width)
 
         options_string = ""
         visual_idx_offset = 1
@@ -111,10 +111,10 @@ class Menu:
 
 
         for idx, option in enumerate(available_options):
-            options_string += f"[{idx + visual_idx_offset}]-{option.name}\n"
+            options_string += f"[{(idx + visual_idx_offset)}]-{option.name}\n"
         
         if self.show_exit_option:
-            options_string += f"[0]-{self.exit_option_text}"
+            options_string += f"[{apply_color("0", "red")}]-{self.exit_option_text}"
         
         menu_string += "\n" + options_string
         print(menu_string)
@@ -238,10 +238,7 @@ def _get_deep_menus(menu: Menu) -> list[Menu]:
 
 
 def range_input_value(min_value: int, max_value: int, input_text: str):
-    if min_value == max_value:
-        return 0
-
-    value = -1
+    value: int = -1
     while value <= min_value or value >= max_value:
         value = input(input_text)
         if not value.isnumeric(): value = min_value - 1
@@ -253,10 +250,12 @@ def range_input_value(min_value: int, max_value: int, input_text: str):
         # Print Warning
         print("WARNING: Invalid option!")
     
-    return value
+    return int(value)
 
 def bool_input_value(input_text: str):
-    value = range_input_value(0, 1, input_text + "\n[1]-Yes\n[0]-No\n")
+    #value = -1
+    #print("[1]-Yes\n[0]-No")
+    value = range_input_value(0, 1, input_text + f"\n{get_str_as_color("green")}[1]-Yes\n{get_str_as_color("red")}[0]-No{get_str_as_color("endc")}\n")
 
     return bool(value)
 
@@ -275,6 +274,37 @@ def list_input_value(valid_values: list[int], input_text: str, invalid_value: in
         print("WARNING: Invalid option!")
     
     return value
+
+
+
+def get_str_as_color(color_str: str):
+    colors = {
+        "red": '\033[91m',
+        "green": '\033[92m',
+        "orange": '\033[93m',
+        "blue": '\033[94m',
+        "header": "\033[95m",
+        "cyan": '\033[96m',
+        "endc": '\033[0m'
+    }
+
+    # Propositalmente vai dar erro se você colocar uma cor que não tá na lista de cores
+    # Tem formas melhoras de fazer isso, mas faz parte
+    return colors[color_str]
+
+def apply_color(text: str, color: str):
+    return get_str_as_color(color) + text + get_str_as_color("endc")
+
+# Color options: red, blue, orange, green
+def print_colored(text: str, color: str):
+    print(apply_color(text, color))
+
+def push_error(text: str):
+    print(apply_color("ERROR: " + text, "red"))
+
+def push_warning(text: str):
+    print(apply_color("WARNING: " + text, "orange"))
+
 
 
 # Example usage:
