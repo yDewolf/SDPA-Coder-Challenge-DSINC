@@ -244,7 +244,7 @@ def range_input_value(min_value: int, max_value: int, input_text: str):
         if not value.isnumeric(): value = min_value - 1
         value = int(value)
 
-        if not value <= min_value or not value >= max_value:
+        if not value < min_value and not value > max_value:
             break
             
         # Print Warning

@@ -1,7 +1,7 @@
 import os
 import utils.DatasetUtils as DatasetUtils
 import utils.ModelUtils as ModelUtils
-from framework.MenuFramework import Menu, MenuHandler, MenuOption, range_input_value, bool_input_value, print_colored
+from framework.MenuFramework import Menu, MenuHandler, MenuOption, range_input_value, bool_input_value, print_colored, push_warning
 import numpy
 
 default_models_path: str = "models/"
@@ -156,7 +156,7 @@ def image_predict_minigame():
         for path in image_paths:
             img_array = DatasetUtils.pylot.imread(path)
             DatasetUtils.pylot.imshow(img_array)
-            DatasetUtils.pylot.title =  "Guess if this duck is an Alien or not: "
+            DatasetUtils.pylot.title("Guess if this duck is an Alien or not: ")
             DatasetUtils.pylot.show()
             guess = bool_input_value("Was the duck an Alien?")
             print(f"Your guess: {categories[guess]} | Correct guess: {categories[images[path]]}")
@@ -168,6 +168,8 @@ def image_predict_minigame():
 
             print_colored(f"\nCurrent score: {score}/{max_score}", "cyan")
         
+        DatasetUtils.pylot.close()
+
         print_colored(f"Final score: {score}/{max_score}", "orange")
         if score == max_score:
             print_colored("Congratulations! You guessed correctly every time", "orange")
@@ -186,24 +188,37 @@ def image_predict_minigame():
 
 def predict_images_in_dir(dir_path: str, menu_handler: MenuHandler):
     print(f"Predicting images from {dir_path}")
-    max_images = int(input("Type how many images should be predicted: "))
+    files = os.listdir(dir_path)
+    max_images = range_input_value(1, len(files), f"Type how many images should be predicted (from 1 to {len(files)}): ")
+
 
     img_paths = []
     count: int = 0
-    for img_path in os.listdir(dir_path):
+
+    if max_images < len(files):
+        push_warning("The image amount is smaller than the amount of images in the directory")
+        shuffle = bool_input_value("Do you want to pick random images?")
+        if shuffle: numpy.random.shuffle(files)
+
+    for img_path in files:
         if count >= max_images:
             break
         
         img_paths.append(dir_path + "/" + img_path)
         count += 1
     
+    
+
     #global loaded_model
     categories: list[str] = ["Alien Duck", "Normal Duck"]
     guesses = ModelUtils.model_predict(loaded_model, categories, img_paths, False)
+
     for guess_dict in guesses:
         DatasetUtils.pylot.imshow(guess_dict["img_array"])
         DatasetUtils.pylot.title(f"Guess: {categories[guess_dict["highest_guess"]]}")
         DatasetUtils.pylot.show()
+
+    DatasetUtils.pylot.close()
 
 # Menu Implementation
 
@@ -243,16 +258,19 @@ main_menu.exit_option_text = "Quit"
 
 menu_handler = MenuHandler(main_menu)
 if not dev_mode:
-    load_model("DuckDetector", menu_handler)
+    load_model("DuckDetector1", menu_handler)
 
 # Kinda dumb way of doing introduction
 
-print("  _________________ __________  _____   ")
-print(" /   _____/\______ \\______   \/  _  \  ")
-print(" \_____  \  |    |  \|     ___/  /_\  \ ")
-print(" /        \ |    `   \    |  /    |    \ ")
-print("/_______  //_______  /____|  \____|__  /")
-print("        \/         \/                \/ ")
+print("  _________________  __________  _____   ")
+print(" /   _____/\______ \ \______   \/  _  \  ")
+print(" \_____  \  |    |  \ |     ___/  /_\  \ ")
+print(" /        \ |    `   \     |  /    |    \ ")
+print("/_______  //_______  / ____|  \____|__  /")
+print("        \/         \/                 \/ ")
 print("Welcome to Alien Duck Detection App\n")
+
+# train_model(loaded_model, "pickle_data/X_train.pickle", "pickle_data/y_train.pickle", 15)
+# save_model(loaded_model, "DuckDetector1")
 
 menu_handler.main_loop()
